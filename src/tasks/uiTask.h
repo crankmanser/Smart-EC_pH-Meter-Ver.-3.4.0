@@ -1,4 +1,5 @@
-#ifndef UI_TASK_H
-#define UI_TASK_H
-void createUiTask();
-#endif
+#pragma once
+
+#include <Arduino.h>
+
+void uiTask(void *pvParameters);

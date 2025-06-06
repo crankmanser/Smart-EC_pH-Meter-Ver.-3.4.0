@@ -1,17 +1,21 @@
-#ifndef STATE_MANAGER_H
-#define STATE_MANAGER_H
+#pragma once
 
-#include "../../project_types.h"
+#include "modules/screens/Screen.h"
+#include "project_types.h"
+#include <memory>
 
-namespace State {
-    void init();
-    DeviceStatus getStatus();
-    void setStatus(DeviceStatus newStatus);
+class StateManager {
+public:
+    StateManager();
+    void begin();
+    void changeState(ScreenState newState);
+    Screen* getCurrentState();
 
-    MenuState getMenuState();
-    void setMenuState(MenuState newMenuState);
+private:
+    std::unique_ptr<HomeScreen> homeScreen;
+    std::unique_ptr<MenuNavScreen> menuNavScreen;
+    // Add other screens here as they are created
     
-    // We will add more getters/setters here for other state variables
-}
-
-#endif // STATE_MANAGER_H
+    Screen* currentState;
+    bool needsRedraw = true;
+};

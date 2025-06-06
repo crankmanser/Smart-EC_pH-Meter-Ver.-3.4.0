@@ -1,4 +1,5 @@
-#ifndef SENSOR_TASK_H
-#define SENSOR_TASK_H
-void createSensorTask();
-#endif
+#pragma once
+
+#include <Arduino.h>
+
+void sensorTask(void *pvParameters);

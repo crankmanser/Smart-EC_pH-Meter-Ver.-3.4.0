@@ -1,41 +1,39 @@
-#include "uiTask.h"
-#include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include "../modules/io/LedManager.h"
-#include "../modules/state/StateManager.h"
+// FILE: src/tasks/uiTask.cpp
 
+#include "tasks/uiTask.h"
+#include "modules/display/DisplayManager.h"
+#include "modules/io/ButtonManager.h"
+#include "modules/io/EncoderManager.h"
+#include "modules/state/StateManager.h"
+#include "modules/screens/Screen.h"
 
+extern DisplayManager displayManager;
+extern ButtonManager buttonManager;
+extern EncoderManager encoderManager;
+extern StateManager stateManager;
 
-// The main loop for the UI task
-void uiTaskLoop(void *pvParameters) {
+void uiTask(void *pvParameters) {
     Serial.println("uiTask: Starting on Core 1.");
-    
-    // --- Initialize UI Modules ---
-    LedManager::init();
-
-    // To test the LED state change, we will automatically switch
-    // from BOOTING to IDLE after a short delay.
-    delay(2000); // Simulate boot time
-    State::setStatus(STATUS_IDLE);
-
 
     for (;;) {
-        // --- Update UI Modules ---
-        // This is the heart of the UI task. It calls the update function
-        // for each active UI module on every loop.
-        LedManager::update();
+        buttonManager.update();
         
-        // ButtonManager::update(); // will be added here later
-        // EncoderManager::update(); // will be added here later
-        // DisplayManager::update(); // will be added here later
+        Screen* currentScreen = stateManager.getCurrentState();
+        if (currentScreen) {
+            
+            // This is the clean, polymorphic way to handle updates.
+            // BootScreen will do its timed transition; other screens will do nothing by default.
+            currentScreen->update(stateManager);
 
+            currentScreen->handleInput(buttonManager, encoderManager, stateManager);
 
-        vTaskDelay(pdMS_TO_TICKS(20)); // Run frequently for responsive UI
+            if (currentScreen->isDirty()) {
+                currentScreen->draw(displayManager);
+                displayManager.displayAll();
+                currentScreen->clearDirty(); 
+            }
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
-}
-
-// Function to create and pin the task
-void createUiTask() {
-    xTaskCreatePinnedToCore(uiTaskLoop, "UITask", 8192, NULL, 2, NULL, 1);
 }
